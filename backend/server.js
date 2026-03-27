@@ -17,7 +17,7 @@ dotenv.config();
 const app = express();
 
 // 🔥 MIDDLEWARE
-app.use(cors());
+app.use(cors()); // allow all for now
 app.use(express.json());
 
 // 🔥 DEBUG LOGGER
@@ -38,30 +38,35 @@ app.get("/api/test", (req, res) => {
   res.send("API working ✅");
 });
 
-// 🔥 SOCKET SERVER SETUP
+// 🔥 CREATE SERVER
 const server = http.createServer(app);
 
+// 🔥 SOCKET.IO SETUP (FIXED)
 const io = new Server(server, {
   cors: {
-    origin: "*", // allow all for now (fix later)
+    origin: "*", // 🔥 FIX: allow all origins
     methods: ["GET", "POST", "PUT", "DELETE"],
   },
 });
 
+// 🔥 MAKE SOCKET GLOBAL
 global.io = io;
 
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
+  console.log("🔌 User connected:", socket.id);
 
   socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
+    console.log("❌ User disconnected:", socket.id);
   });
 });
 
 // 🔥 PORT
 const PORT = process.env.PORT || 5000;
 
-// 🔥 CONNECT DB + START SERVER (IMPORTANT FIX)
+// 🔥 DEBUG ENV
+console.log("MONGO_URI:", process.env.MONGO_URI);
+
+// 🔥 CONNECT DATABASE FIRST, THEN START SERVER
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
