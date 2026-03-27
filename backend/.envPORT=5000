@@ -1,3 +1,3 @@
 PORT=5000
-MONGO_URI=mongodb://127.0.0.1:27017/smart_agile
+MONGO_URI=mongodb+srv://ankit:YOUR_PASSWORD@cluster0.yy3utel.mongodb.net/smart_agile?retryWrites=true&w=majority
 JWT_SECRET=ankit_super_secret_jwt_key_2026
