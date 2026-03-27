@@ -1,0 +1,29 @@
+# Query: localhost:5000
+# ContextLines: 1
+
+5 results - 5 files
+
+frontend\src\services\activityService.js:
+  2  
+  3: const API = "https://smart-agile.onrender.com/api/activity";
+  4  
+
+frontend\src\services\api.js:
+  3  const API = axios.create({
+  4:   baseURL: "https://smart-agile.onrender.com/api",
+  5  });
+
+frontend\src\services\issueService.js:
+  2  
+  3: const API = "https://smart-agile.onrender.com/api/issues";
+  4  
+
+frontend\src\services\socket.js:
+  2  
+  3: const socket = io("https://smart-agile.onrender.com");
+  4  
+
+frontend\src\services\userService.js:
+  2  
+  3: const API = "https://smart-agile.onrender.com/api/users";
+  4  
