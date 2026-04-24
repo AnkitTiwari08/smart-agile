@@ -1,30 +1,38 @@
 const Issue = require("../models/Issue");
 const Activity = require("../models/Activity");
 
-// CREATE ISSUE
+// CREATE ISSUE (ADMIN ONLY)
 exports.createIssue = async (req, res) => {
   try {
-    const { title, description, priority, project } = req.body;
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Only admin can create issues" });
+    }
+
+    const { title, description, project } = req.body;
+
+    // VALIDATION
+    if (!title || !description || !project) {
+      return res.status(400).json({
+        message: "Title, description and project are required",
+      });
+    }
 
     const issue = await Issue.create({
       title,
       description,
-      priority,
       status: "todo",
       project,
     });
 
-    // 🔥 ACTIVITY
     const activity = await Activity.create({
       message: `Issue "${issue.title}" created`,
       issue: issue._id,
       project: issue.project,
     });
 
-    // 🔥 REAL-TIME ISSUE
     if (global.io) {
       global.io.emit("issueCreated", issue);
-      global.io.emit("activityCreated", activity); // 🔥 NEW
+      global.io.emit("activityCreated", activity);
     }
 
     res.status(201).json(issue);
@@ -33,7 +41,7 @@ exports.createIssue = async (req, res) => {
   }
 };
 
-// GET ISSUES
+// GET ISSUES (ALL USERS)
 exports.getIssues = async (req, res) => {
   try {
     const { project } = req.query;
@@ -50,21 +58,29 @@ exports.getIssues = async (req, res) => {
   }
 };
 
-// DELETE ISSUE
+// DELETE ISSUE (ADMIN ONLY)
 exports.deleteIssue = async (req, res) => {
   try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Only admin can delete issues" });
+    }
+
     const issue = await Issue.findById(req.params.id);
+
+    if (!issue) {
+      return res.status(404).json({ message: "Issue not found" });
+    }
 
     await Issue.findByIdAndDelete(req.params.id);
 
     const activity = await Activity.create({
-      message: `Issue "${issue?.title}" deleted`,
-      project: issue?.project,
+      message: `Issue "${issue.title}" deleted`,
+      project: issue.project,
     });
 
     if (global.io) {
       global.io.emit("issueDeleted", req.params.id);
-      global.io.emit("activityCreated", activity); // 🔥 NEW
+      global.io.emit("activityCreated", activity);
     }
 
     res.json({ message: "Deleted" });
@@ -73,9 +89,13 @@ exports.deleteIssue = async (req, res) => {
   }
 };
 
-// UPDATE STATUS
+// UPDATE STATUS (ADMIN ONLY)
 exports.updateStatus = async (req, res) => {
   try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Only admin can update status" });
+    }
+
     const { status } = req.body;
 
     const updated = await Issue.findByIdAndUpdate(
@@ -83,6 +103,10 @@ exports.updateStatus = async (req, res) => {
       { status },
       { new: true }
     ).populate("assignee", "name email");
+
+    if (!updated) {
+      return res.status(404).json({ message: "Issue not found" });
+    }
 
     const activity = await Activity.create({
       message: `Issue moved to ${status}`,
@@ -92,7 +116,7 @@ exports.updateStatus = async (req, res) => {
 
     if (global.io) {
       global.io.emit("issueUpdated", updated);
-      global.io.emit("activityCreated", activity); // 🔥 NEW
+      global.io.emit("activityCreated", activity);
     }
 
     res.json(updated);
@@ -101,16 +125,35 @@ exports.updateStatus = async (req, res) => {
   }
 };
 
-// UPDATE ISSUE
+// UPDATE ISSUE (ADMIN ONLY)
 exports.updateIssue = async (req, res) => {
   try {
-    const { title, description, priority } = req.body;
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Only admin can update issues" });
+    }
+
+    const { title, description, assignee } = req.body;
+
+    // VALIDATION
+    if (!title || !description) {
+      return res.status(400).json({
+        message: "Title and description are required",
+      });
+    }
 
     const updated = await Issue.findByIdAndUpdate(
       req.params.id,
-      { title, description, priority },
+      {
+        title,
+        description,
+        assignee,
+      },
       { new: true }
     ).populate("assignee", "name email");
+
+    if (!updated) {
+      return res.status(404).json({ message: "Issue not found" });
+    }
 
     if (global.io) {
       global.io.emit("issueUpdated", updated);
@@ -122,9 +165,13 @@ exports.updateIssue = async (req, res) => {
   }
 };
 
-// ASSIGN USER
+// ASSIGN USER (ADMIN ONLY)
 exports.assignUser = async (req, res) => {
   try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Only admin can assign users" });
+    }
+
     const { userId } = req.body;
 
     const issue = await Issue.findByIdAndUpdate(
@@ -132,6 +179,10 @@ exports.assignUser = async (req, res) => {
       { assignee: userId || null },
       { new: true }
     ).populate("assignee", "name email");
+
+    if (!issue) {
+      return res.status(404).json({ message: "Issue not found" });
+    }
 
     const activity = await Activity.create({
       message: `User assigned to issue`,
@@ -141,7 +192,7 @@ exports.assignUser = async (req, res) => {
 
     if (global.io) {
       global.io.emit("issueUpdated", issue);
-      global.io.emit("activityCreated", activity); // 🔥 NEW
+      global.io.emit("activityCreated", activity);
     }
 
     res.json(issue);
@@ -150,7 +201,7 @@ exports.assignUser = async (req, res) => {
   }
 };
 
-// STATS
+// STATS (ALL USERS)
 exports.getIssueStats = async (req, res) => {
   try {
     const issues = await Issue.find();

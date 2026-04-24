@@ -10,17 +10,55 @@ const Login = () => {
     password: "",
   });
 
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
+  // 🔥 VALIDATION FUNCTION
+  const validate = () => {
+    let newErrors = {};
+
+    // Email validation
+    if (!formData.email) {
+      newErrors.email = "Email is required";
+    } else if (
+      !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.email)
+    ) {
+      newErrors.email = "Invalid email address";
+    }
+
+    // Password validation
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // 🔥 HANDLE CHANGE
   const handleChange = (e) => {
+    const { name, value } = e.target;
+
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [name]: value,
+    }));
+
+    // Remove error while typing
+    setErrors((prev) => ({
+      ...prev,
+      [name]: "",
     }));
   };
 
+  // 🔥 SUBMIT
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validate()) return;
+
     setLoading(true);
 
     try {
@@ -31,7 +69,9 @@ const Login = () => {
 
       navigate("/dashboard");
     } catch (err) {
-      alert(err?.response?.data?.message || "Login failed");
+      setErrors({
+        api: err?.response?.data?.message || "Login failed",
+      });
     } finally {
       setLoading(false);
     }
@@ -45,31 +85,54 @@ const Login = () => {
           Login to Smart Agile
         </p>
 
+        {/* 🔥 API ERROR */}
+        {errors.api && (
+          <p style={{ color: "red", marginBottom: "10px" }}>
+            {errors.api}
+          </p>
+        )}
+
         <form onSubmit={handleSubmit} style={formStyle}>
-          <input
-            type="email"
-            name="email"
-            placeholder="Enter email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            style={inputStyle}
-          />
+          
+          {/* EMAIL */}
+          <div>
+            <input
+              type="email"
+              name="email"
+              placeholder="Enter email"
+              value={formData.email}
+              onChange={handleChange}
+              style={inputStyle}
+            />
+            {errors.email && (
+              <p style={errorText}>{errors.email}</p>
+            )}
+          </div>
 
-          <input
-            type="password"
-            name="password"
-            placeholder="Enter password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-            style={inputStyle}
-          />
+          {/* PASSWORD */}
+          <div>
+            <input
+              type="password"
+              name="password"
+              placeholder="Enter password"
+              value={formData.password}
+              onChange={handleChange}
+              style={inputStyle}
+            />
+            {errors.password && (
+              <p style={errorText}>{errors.password}</p>
+            )}
+          </div>
 
+          {/* BUTTON */}
           <button
             type="submit"
             disabled={loading}
-            style={buttonStyle}
+            style={{
+              ...buttonStyle,
+              opacity: loading ? 0.6 : 1,
+              cursor: loading ? "not-allowed" : "pointer",
+            }}
           >
             {loading ? "Logging in..." : "Login"}
           </button>
@@ -115,8 +178,9 @@ const formStyle = {
 const inputStyle = {
   padding: "12px",
   borderRadius: "8px",
-  border: "none",
+  border: "1px solid #444",
   outline: "none",
+  width: "100%",
 };
 
 const buttonStyle = {
@@ -125,7 +189,13 @@ const buttonStyle = {
   padding: "12px",
   borderRadius: "8px",
   border: "none",
-  cursor: "pointer",
+};
+
+const errorText = {
+  color: "red",
+  fontSize: "12px",
+  marginTop: "5px",
+  textAlign: "left",
 };
 
 export default Login;

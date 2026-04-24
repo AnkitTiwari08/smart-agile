@@ -23,6 +23,10 @@ const Dashboard = () => {
 
   const navigate = useNavigate();
 
+  // 🔥 GET USER ROLE
+  const user = JSON.parse(localStorage.getItem("user"));
+  const isAdmin = user?.role === "admin";
+
   const fetchData = async () => {
     try {
       const projectData = await getProjects();
@@ -40,12 +44,21 @@ const Dashboard = () => {
   }, []);
 
   const handleDelete = async (id) => {
+    if (!isAdmin) return; // 🔥 extra safety
     if (!window.confirm("Delete project?")) return;
     await deleteProject(id);
     fetchData();
   };
 
+  // 🔥 LOGOUT
+  const handleLogout = () => {
+    if (!window.confirm("Are you sure you want to logout?")) return;
+    localStorage.clear();
+    navigate("/login");
+  };
+
   const handleEditClick = (project) => {
+    if (!isAdmin) return; // 🔥 safety
     setEditProject(project);
     setFormData({
       name: project.name || "",
@@ -74,6 +87,14 @@ const Dashboard = () => {
             Manage your projects like a pro
           </p>
         </div>
+
+        <button
+          onClick={handleLogout}
+          className="btn-danger"
+          style={{ padding: "10px 16px" }}
+        >
+          Logout
+        </button>
       </div>
 
       {/* STATS */}
@@ -127,19 +148,24 @@ const Dashboard = () => {
                     View
                   </button>
 
-                  <button
-                    className="edit"
-                    onClick={() => handleEditClick(p)}
-                  >
-                    Edit
-                  </button>
+                  {/* 🔥 ADMIN ONLY BUTTONS */}
+                  {isAdmin && (
+                    <>
+                      <button
+                        className="edit"
+                        onClick={() => handleEditClick(p)}
+                      >
+                        Edit
+                      </button>
 
-                  <button
-                    className="delete"
-                    onClick={() => handleDelete(p._id)}
-                  >
-                    Delete
-                  </button>
+                      <button
+                        className="delete"
+                        onClick={() => handleDelete(p._id)}
+                      >
+                        Delete
+                      </button>
+                    </>
+                  )}
                 </div>
 
               </div>
@@ -148,8 +174,8 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* EDIT MODAL */}
-      {editProject && (
+      {/* EDIT MODAL (ADMIN ONLY) */}
+      {isAdmin && editProject && (
         <div className="modal-overlay">
           <div className="modal">
             <h2>Edit Project</h2>

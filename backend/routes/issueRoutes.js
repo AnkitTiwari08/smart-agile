@@ -1,3 +1,4 @@
+
 const express = require("express");
 const router = express.Router();
 
@@ -11,25 +12,27 @@ const {
   getIssueStats,
 } = require("../controllers/issueController");
 
-// CREATE
-router.post("/", createIssue);
+const { protect, adminOnly } = require("../middleware/authMiddleware");
 
-// GET
-router.get("/", getIssues);
+// CREATE (ADMIN ONLY)
+router.post("/", protect, adminOnly, createIssue);
 
-// STATS
-router.get("/stats", getIssueStats);
+// GET (ALL USERS)
+router.get("/", protect, getIssues);
 
-// UPDATE ISSUE
-router.put("/:id", updateIssue);
+// STATS (ALL USERS)
+router.get("/stats", protect, getIssueStats);
 
-// UPDATE STATUS (DRAG)
-router.put("/:id/status", updateStatus);
+// UPDATE ISSUE (ADMIN ONLY)
+router.put("/:id", protect, adminOnly, updateIssue);
 
-// 🔥 ASSIGN USER
-router.put("/:id/assign", assignUser);
+// UPDATE STATUS (ADMIN ONLY)
+router.put("/:id/status", protect, adminOnly, updateStatus);
 
-// DELETE
-router.delete("/:id", deleteIssue);
+// ASSIGN USER (ADMIN ONLY)
+router.put("/:id/assign", protect, adminOnly, assignUser);
+
+// DELETE (ADMIN ONLY)
+router.delete("/:id", protect, adminOnly, deleteIssue);
 
 module.exports = router;

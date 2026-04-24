@@ -1,11 +1,9 @@
-import axios from "axios";
-
-const API = `${import.meta.env.VITE_API_URL}/api/activity`;
+import api from "./api"; // ✅ use interceptor
 
 // 🔥 GET ALL ACTIVITIES
 export const getActivities = async () => {
   try {
-    const res = await axios.get(API);
+    const res = await api.get("/activity"); // ✅ clean + token attached
     return res.data;
   } catch (err) {
     console.error("Error fetching activities:", err);

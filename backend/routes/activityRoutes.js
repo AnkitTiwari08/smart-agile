@@ -1,8 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const Activity = require("../models/Activity");
+const { protect } = require("../middleware/authMiddleware");
 
-router.get("/", async (req, res) => {
+// GET ACTIVITIES (ALL LOGGED-IN USERS)
+router.get("/", protect, async (req, res) => {
   try {
     const activities = await Activity.find()
       .sort({ createdAt: -1 })

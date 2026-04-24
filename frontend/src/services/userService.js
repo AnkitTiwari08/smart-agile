@@ -1,11 +1,9 @@
-import axios from "axios";
+import api from "./api"; // ✅ use configured instance
 
-const API = `${import.meta.env.VITE_API_URL}/api/users`;
-
-// 🔥 GET USERS (SAFE FIX)
+// 🔥 GET USERS
 export const getUsers = async () => {
   try {
-    const res = await axios.get(API);
+    const res = await api.get("/users"); // ✅ token attached
 
     // ensure always array
     return Array.isArray(res.data) ? res.data : [];
